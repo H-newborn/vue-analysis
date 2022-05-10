@@ -109,15 +109,18 @@ export function createComponent (
     return
   }
 
+  // Vue
   const baseCtor = context.$options._base
 
   // plain options object: turn it into a constructor
+  // 创建组件的构造函数
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
 
   // if at this stage it's not a constructor or an async component factory,
   // reject.
+  // 不是构造函数则报错
   if (typeof Ctor !== 'function') {
     if (process.env.NODE_ENV !== 'production') {
       warn(`Invalid Component definition: ${String(Ctor)}`, context)
@@ -126,6 +129,7 @@ export function createComponent (
   }
 
   // async component
+  // 异步组件的逻辑，创建占位节点
   let asyncFactory
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor
@@ -170,6 +174,7 @@ export function createComponent (
   // so it gets processed during parent component patch.
   data.on = data.nativeOn
 
+  // 抽象组件的逻辑
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
     // other than props & listeners & slot
@@ -183,9 +188,11 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件钩子
   installComponentHooks(data)
 
   // return a placeholder vnode
+  // 创建占位符vnode
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -202,6 +209,7 @@ export function createComponent (
     return renderRecyclableComponentTemplate(vnode)
   }
 
+  // 返回vnode
   return vnode
 }
 

@@ -25,7 +25,7 @@ let uid = 0
 export default class Watcher {
   vm: Component;
   expression: string;
-  cb: Function;
+  cb: Function; 
   id: number;
   deep: boolean;
   user: boolean;

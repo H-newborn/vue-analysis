@@ -65,6 +65,7 @@ export function parse (
   template: string,
   options: CompilerOptions
 ): ASTElement | void {
+  // 对options进行解析
   warn = options.warn || baseWarn
 
   platformIsPreTag = options.isPreTag || no
@@ -75,6 +76,7 @@ export function parse (
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
 
+  // 分隔符可以自己设置
   delimiters = options.delimiters
 
   const stack = []
@@ -106,6 +108,7 @@ export function parse (
     }
   }
 
+  // 执行parseHTML，传入了一个对象，里面有一些钩子函数
   parseHTML(template, {
     warn,
     expectHTML: options.expectHTML,
@@ -125,11 +128,13 @@ export function parse (
         attrs = guardIESVGBug(attrs)
       }
 
+      // 生成ast树的核心函数，返回ast对象 { type: 1, tag, attrsList, attrsMap, parent, children}
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
       }
 
+      // 如果是script、stype、text/javascript等标签且非服务端渲染，则报错
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true
         process.env.NODE_ENV !== 'production' && warn(
@@ -144,12 +149,16 @@ export function parse (
         element = preTransforms[i](element, options) || element
       }
 
+      // 对ast对象做一个丰富
+      // v-pre相关，这个指定对于没有其他指令的标签用处较大，跳过大量没有指令的节点会加快编译。
       if (!inVPre) {
+        // 拿到v-pre的值，给AST element添加pre属性，并且在attrs数组及attrsMap中删掉该指令
         processPre(element)
         if (element.pre) {
           inVPre = true
         }
       }
+      // 
       if (platformIsPreTag(element.tag)) {
         inPre = true
       }
@@ -182,10 +191,13 @@ export function parse (
       }
 
       // tree management
+      // ast树管理
       if (!root) {
         root = element
+        // 检查根节点
         checkRootConstraints(root)
       } else if (!stack.length) {
+        // 不止一个根节点，报错
         // allow root elements with v-if, v-else-if and v-else
         if (root.if && (element.elseif || element.else)) {
           checkRootConstraints(element)
@@ -217,6 +229,7 @@ export function parse (
         currentParent = element
         stack.push(element)
       } else {
+        // 关闭标签
         closeElement(element)
       }
     },
@@ -234,7 +247,8 @@ export function parse (
       closeElement(element)
     },
 
-    chars (text: string) {
+    chars(text: string) {
+      // （没有父节点，纯文本的情况下），（有父节点，文本定义在外面的情况下）会报错
       if (!currentParent) {
         if (process.env.NODE_ENV !== 'production') {
           if (text === template) {
@@ -250,6 +264,7 @@ export function parse (
         return
       }
       // IE textarea placeholder bug
+      // IE placeholder bug 的处理，不太重要
       /* istanbul ignore if */
       if (isIE &&
         currentParent.tag === 'textarea' &&
@@ -257,13 +272,19 @@ export function parse (
       ) {
         return
       }
+
       const children = currentParent.children
+      // 对text进行处理
       text = inPre || text.trim()
+        // 存在inPre，执行下面逻辑
         ? isTextTag(currentParent) ? text : decodeHTMLCached(text)
         // only preserve whitespace if its not right after a starting tag
+        // 不存在inpre
         : preserveWhitespace && children.length ? ' ' : ''
+      // text存在
       if (text) {
         let res
+        // 不在inVpre环境，解析text文本，这儿生成的是表达式节点
         if (!inVPre && text !== ' ' && (res = parseText(text, delimiters))) {
           children.push({
             type: 2,
@@ -271,6 +292,7 @@ export function parse (
             tokens: res.tokens,
             text
           })
+          // 纯文本节点，
         } else if (text !== ' ' || !children.length || children[children.length - 1].text !== ' ') {
           children.push({
             type: 3,
@@ -279,6 +301,7 @@ export function parse (
         }
       }
     },
+    // 生成注释节点
     comment (text: string) {
       currentParent.children.push({
         type: 3,

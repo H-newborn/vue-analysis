@@ -43,8 +43,11 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // __ob__属性指向this
     def(value, '__ob__', this)
+    // 判断值是否为数组类型
     if (Array.isArray(value)) {
+      // 
       const augment = hasProto
         ? protoAugment
         : copyAugment
